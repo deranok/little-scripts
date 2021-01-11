@@ -40,6 +40,7 @@ try:
 	res = urllib.request.urlopen(db_url, data=form_data)
 except:
 	print("Network problems... try again later.")
+	sys.exit()
 res = str(res.read(), 'utf-8')
 
 print('Received data')
