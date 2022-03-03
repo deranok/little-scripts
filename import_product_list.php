@@ -27,3 +27,9 @@ foreach($dir as $sqlfile) {
 	}
 	
 }
+
+//set stock to zero in the products table!!!
+//remove all stocks
+print("removing stocks");
+"mysql -u ".$dbuser." -p ".$dbpass." < update llx_product set stock=0;"
+"mysql -u ".$dbuser." -p ".$dbpass." < update llx_product_stock set reel=0;"
