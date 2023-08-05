@@ -9,10 +9,14 @@ cd $vid_storage;
   fn_args=( -s -f "$sel_frmt" -S "$sor_frmt" -O "${on_args}" );
   dl_args=( -F $vid_url );
   out_file=$(yt-dlp "${fn_args[@]}" $vid_url); 
+  if [ -z "$out_file" ]; then { cd "$cur_d"; return; } fi
   echo "output file: $out_file";
   yt-dlp -R "infinite" --no-part -o "$out_file" -f "$sel_frmt" -S "$sor_frmt" "$vid_url" &
+  dl_pid=$!;
+  function kill_dl() { cd "$cur_d"; kill $dl_pid; }
+  trap kill_dl SIGINT;
   echo "waiting for download";
   until [ -e "$out_file" ]; do { sleep 5;  }; done
   echo -e "\rdownload started  ";
-  tail -f -c +0 "$out_file" | mpv -;
+  tail -f -c +0 "$out_file" | mpv --pause -;
 cd "$cur_d";
