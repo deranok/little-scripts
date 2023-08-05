@@ -3,8 +3,6 @@ cur_d="$(pwd)";
 cd $vid_storage;
   vid_id=$(echo $1 | cut -d ? -f 2 | cut -d '&' -f 1);
   vid_url='https://youtube.com/watch?'$vid_id;
-  echo $vid_id;
-  echo $vid_url;
   on_args='"%(channel)s - %(title)s.%(ext)s"';
   sel_frmt='b[height>=360]/b';
   sor_frmt='+size';
