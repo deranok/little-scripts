@@ -1,22 +1,41 @@
-vid_storage='/path/to/video/storage';
-cur_d="$(pwd)";
-cd $vid_storage;
-  vid_id=$(echo $1 | cut -d ? -f 2 | cut -d '&' -f 1);
-  vid_url='https://youtube.com/watch?'$vid_id;
-  on_args='"%(channel)s - %(title)s.%(ext)s"';
-  sel_frmt='b[height>=360]/b';
-  sor_frmt='+size';
-  fn_args=( -s -f "$sel_frmt" -S "$sor_frmt" -O "${on_args}" );
-  dl_args=( -F $vid_url );
-  out_file=$(yt-dlp "${fn_args[@]}" $vid_url); 
-  if [ -z "$out_file" ]; then { cd "$cur_d"; return; } fi
-  echo "output file: $out_file";
-  yt-dlp -R "infinite" --no-part -o "$out_file" -f "$sel_frmt" -S "$sor_frmt" "$vid_url" &
-  dl_pid=$!;
-  function kill_dl() { cd "$cur_d"; kill $dl_pid; }
-  trap kill_dl SIGINT;
-  echo "waiting for download";
-  until [ -e "$out_file" ]; do { sleep 5;  }; done
-  echo -e "\rdownload started  ";
-  tail -f -c +0 "$out_file" | mpv --pause -;
-cd "$cur_d";
+#!/usr/bin/env python3
+# Watch youtube conveniently
+from yt_dlp import YoutubeDL
+import sys
+import json
+import pprint
+import subprocess
+
+dl_params = {
+   # 'simulate': True,
+   # 'listformats': True,
+   'format': '-',
+   'outtmpl': {'default': '[%(channel)s] %(title)s.%(ext)s'},
+   'nopart': True,
+   'retries': float('inf'),
+   'retry_sleep_functions': {
+      'http': lambda n: 4,
+      'fragment': lambda n: 1,
+      'file_access': lambda n: 1
+   },
+}
+
+with YoutubeDL(dl_params) as ydl:
+    my_info = ydl.extract_info(sys.argv[1], download=False)
+
+    vid_url = False
+    aud_url = False
+    for ydl_format in my_info['requested_formats']:
+        if ydl_format['vcodec'] != 'none':
+            vid_url = ydl_format['url']
+        if ydl_format['acodec'] != 'none':
+            aud_url = ydl_format['url']
+
+    vid_title = my_info.get('fulltitle', 'YT Video')
+    if vid_url and aud_url:
+        subprocess.run(['mpv',
+                        '--player-operation-mode=pseudo-gui',
+                        f'--title={vid_title}',
+                        '--keep-open=yes',
+                        f'--audio-file={aud_url}',
+                        vid_url])
